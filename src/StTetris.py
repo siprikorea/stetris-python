@@ -1,4 +1,13 @@
-class StTetris():
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+
+from PyQt5.QtWidgets import QWidget
+from StPlay import StPlay
+from StScore import StScore
+
+
+
+class StTetris(QWidget):
 
     ST_WINDOW_WIDTH = 800
     ST_WINDOW_HEIGHT = 600
@@ -12,11 +21,12 @@ class StTetris():
     ST_SCORE_POS_Y = 30
     ST_HIGHSCORE_POS_X = 650
     ST_HIGHSCORE_POS_Y = 30
-    ST_BLOCK_COLOR = ["#000000", "#C71585", "#FFA500","#FFD700",  "#228B22",  "#1E90FF",  "#483D8B",  "#9932CC"]
+    ST_BLOCK_COLOR = ["#000000", "#C71585", "#FFA500", "#FFD700",
+                      "#228B22", "#1E90FF", "#483D8B", "#9932CC"]
     ST_BACKGROUND_COLOR = "#FFFFFF"
 
     # Constructor
-    def __init__(self, canvas):
+    def __init__(self):
         # Canvas
         # self.canvas = canvas
         # self.canvas.width = StTetris.ST_WINDOW_WIDTH
@@ -33,13 +43,13 @@ class StTetris():
         self.highScore = StScore()
         # Load high score
         # highScore = sessionStorage.getItem("highscore")
-        if (highScore):
-            # Set high score
-            self.highScore.setScore(highScore)
+        # if (highScore):
+        #   Set high score
+        #   self.highScore.setScore(highScore)
         # Play interval
         self.playInterval = 500
         # Play interval handle
-        self.playIntervalHandle = null
+        # self.playIntervalHandle = null
 
     # Start
     def start(self):
@@ -79,21 +89,15 @@ class StTetris():
 
     # Notify
     def notify(self, message, param):
-        switch (message):
-            case StPlay.ST_NOTIFY_LEFT:
-            case StPlay.ST_NOTIFY_RIGHT:
-            case StPlay.ST_NOTIFY_ROTATE:
-                break
-            case StPlay.ST_NOTIFY_DOWN:
-            case StPlay.ST_NOTIFY_DROP:
-                self.score.setScore(self.score.getScore() + 100)
-                break
-            case StPlay.ST_NOTIFY_CLEAR:
-                self.score.setScore(self.score.getScore() + param.cleared_lines * 1000)
-                break
-            case StPlay.ST_NOTIFY_TETRISOVER:
-                self.stop()
-                return
+        if (message == StPlay.ST_NOTIFY_DOWN):
+            self.score.setScore(self.score.getScore() + 100)
+        elif (message == StPlay.ST_NOTIFY_DROP):
+            self.score.setScore(self.score.getScore() + 100)
+        elif (message == StPlay.ST_NOTIFY_CLEAR):
+            self.score.setScore(self.score.getScore()
+                                + param.cleared_lines * 1000)
+        elif (message == StPlay.ST_NOTIFY_TETRISOVER):
+            self.stop()
 
         # Update high score
         if self.highScore.getScore() < self.score.getScore():
@@ -110,7 +114,8 @@ class StTetris():
             x: 0,
             y: 0,
             width: StTetris.ST_WINDOW_WIDTH,
-            height: StTetris.ST_WINDOW_HEIGHT }
+            height: StTetris.ST_WINDOW_HEIGHT
+        }
         self.drawBackground(self.ctx, rect)
 
         # Draw board
@@ -118,7 +123,8 @@ class StTetris():
             x: StTetris.ST_BOARD_POS_X,
             y: StTetris.ST_BOARD_POS_Y,
             width: StTetris.ST_BLOCK_WIDTH * self.play.getBoard().getXSize(),
-            height: StTetris.ST_BLOCK_HEIGHT * self.play.getBoard().getYSize() }
+            height: StTetris.ST_BLOCK_HEIGHT * self.play.getBoard().getYSize()
+        }
         self.drawBoard(ctx, boardRect, self.play.getBoard())
 
         # Draw current block
@@ -129,7 +135,8 @@ class StTetris():
             x: StTetris.ST_NEXT_BLOCK_POS_X,
             y: StTetris.ST_NEXT_BLOCK_POS_Y,
             width: StTetris.ST_BLOCK_WIDTH * StTetris.ST_MAX_BLOCK_X,
-            height: StTetris.ST_BLOCK_HEIGHT * StTetris.ST_MAX_BLOCK_Y }
+            height: StTetris.ST_BLOCK_HEIGHT * StTetris.ST_MAX_BLOCK_Y
+        }
         self.drawBlock(ctx, nextBlockRect, self.play.getNextBlock())
 
         # Draw score
@@ -137,7 +144,8 @@ class StTetris():
             x: StTetris.ST_SCORE_POS_X,
             y: StTetris.ST_SCORE_POS_Y,
             width: StTetris.ST_BLOCK_WIDTH * 7,
-            height: StTetris.ST_BLOCK_HEIGHT * 2 }
+            height: StTetris.ST_BLOCK_HEIGHT * 2
+        }
         self.drawScore(ctx, scoreRect, "SCORE", self.score)
 
         # Draw high score
@@ -145,7 +153,8 @@ class StTetris():
             x: StTetris.ST_HIGHSCORE_POS_X,
             y: StTetris.ST_HIGHSCORE_POS_Y,
             width: StTetris.ST_BLOCK_WIDTH * 7,
-            height: StTetris.ST_BLOCK_HEIGHT * 2 }
+            height: StTetris.ST_BLOCK_HEIGHT * 2
+        }
         self.drawScore(ctx, highScoreRect, "HIGH SCORE", self.highScore)
 
     # Draw background
@@ -157,13 +166,14 @@ class StTetris():
     def drawBoard(self, ctx, rect, board):
 
         # Draw board
-        for (let boardY = 0; boardY < board.getYSize(); boardY++):
-            for (let boardX = 0; boardX < board.getXSize(); boardX++):
+        for boardY in range(board.getYSize()):
+            for boardX in range(board.getXSize()):
                 rectBlock = {
                     x: rect.x + boardX * StTetris.ST_BLOCK_WIDTH,
                     y: rect.y + boardY * StTetris.ST_BLOCK_HEIGHT,
                     width: StTetris.ST_BLOCK_WIDTH,
-                    height: StTetris.ST_BLOCK_HEIGHT }
+                    height: StTetris.ST_BLOCK_HEIGHT
+                }
                 ctx.fillStyle = StTetris.ST_BLOCK_COLOR[self.play.getBoard().getBlock(boardX, boardY)]
                 ctx.fillRect(rectBlock.x, rectBlock.y, rectBlock.width, rectBlock.height)
 
@@ -177,8 +187,8 @@ class StTetris():
                     rectBlock = {
                         x: rect.x + (block.getXPos() + blockX) * StTetris.ST_BLOCK_WIDTH,
                         y: rect.y + (block.getYPos() + blockY) * StTetris.ST_BLOCK_HEIGHT,
-                        width: StTetris.ST_BLOCK_WIDTH,
-                        height: StTetris.ST_BLOCK_HEIGHT }
+                        width: StTetris.ST_BLOCK_WIDTH, height: StTetris.ST_BLOCK_HEIGHT
+                    }
                     ctx.fillStyle = StTetris.ST_BLOCK_COLOR[block.getBlock(blockX, blockY)]
                     ctx.fillRect(rectBlock.x, rectBlock.y, rectBlock.width, rectBlock.height)
 
