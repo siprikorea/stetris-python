@@ -1,6 +1,7 @@
 import random
 
 class StBlock:
+
     blocks = [ [
                 [
                     [ 1, 0, 0 ],
@@ -94,19 +95,8 @@ class StBlock:
                 ]
             ] ]
 
-    def __init__(self, block) {
-        if (block != null):
-            # Type
-            self.type = block.type
-            # X Position
-            self.xPos = block.xPos
-            # Y Position
-            self.yPos = block.yPos
-            # Rotation
-            self.rotation = block.rotation
-            # Block
-            self.block = block.block
-        else:
+    def __init__(self, block=None):
+        if block is None:
             # Type
             self.type = random.randint(1, len(StBlock.blocks))
             # X Position
@@ -117,8 +107,17 @@ class StBlock:
             self.rotation = 0
             # Block
             self.block = StBlock.blocks[self.type-1]
-        }
-    }
+        else:
+            # Type
+            self.type = block.type
+            # X Position
+            self.xPos = block.xPos
+            # Y Position
+            self.yPos = block.yPos
+            # Rotation
+            self.rotation = block.rotation
+            # Block
+            self.block = block.block
 
     # Get type
     def getType(self):
@@ -153,7 +152,6 @@ class StBlock:
             return 0
 
         return self.block[self.rotation][y][x]
-    }
 
     # Set X position
     def setXPos(self, xPos):
@@ -165,4 +163,4 @@ class StBlock:
     
     # Set rotation
     def setRotation(self, rotation):
-        self.rotation = rotation % self.block.length
+        self.rotation = self.rotation % len(self.block)

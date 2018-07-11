@@ -1,10 +1,8 @@
-#!/usr/bin/python3
-# -*- coding: utf-8 -*-
-
-from PyQt5.QtWidgets import QWidget
 from StPlay import StPlay
 from StScore import StScore
-
+from PyQt5.QtCore import QBasicTimer, QRect, Qt
+from PyQt5.QtGui import QBrush, QColor, QFont, QPainter
+from PyQt5.QtWidgets import QWidget
 
 
 class StTetris(QWidget):
@@ -21,19 +19,21 @@ class StTetris(QWidget):
     ST_SCORE_POS_Y = 30
     ST_HIGHSCORE_POS_X = 650
     ST_HIGHSCORE_POS_Y = 30
-    ST_BLOCK_COLOR = ["#000000", "#C71585", "#FFA500", "#FFD700",
-                      "#228B22", "#1E90FF", "#483D8B", "#9932CC"]
+    ST_BLOCK_COLOR = ["#000000", "#C71585", "#FFA500", "#FFD700", "#228B22", "#1E90FF", "#483D8B", "#9932CC"]
     ST_BACKGROUND_COLOR = "#FFFFFF"
+    ST_DOWN_INTERVAL = 500
 
     # Constructor
     def __init__(self):
-        # Canvas
-        # self.canvas = canvas
-        # self.canvas.width = StTetris.ST_WINDOW_WIDTH
-        # self.canvas.height = StTetris.ST_WINDOW_HEIGHT
+        super().__init__()
 
-        # Context of canvas
-        # self.ctx = self.canvas.getContext("2d")
+        # Show widget
+        super().resize(self.ST_WINDOW_WIDTH, self.ST_WINDOW_HEIGHT)
+        super().setWindowTitle("STetris")
+        super().show()
+
+        # Painter
+        self.painter = QPainter()
 
         # Play
         self.play = StPlay(self)
@@ -48,47 +48,37 @@ class StTetris(QWidget):
         #   self.highScore.setScore(highScore)
         # Play interval
         self.playInterval = 500
-        # Play interval handle
-        # self.playIntervalHandle = null
+        # Play timer
+        self.playTimer = QBasicTimer()
 
     # Start
     def start(self):
         # Set interval
-        # self.playIntervalHandle = setInterval(() => {
-        #     self.play.moveDown() },
-        #     self.playInterval);
-
-        # Key down event listener
-        # self.onKeyDown = (e) => {
-        #    switch (e.code):
-        #        case "ArrowLeft":
-        #            self.play.moveLeft()
-        #            break
-        #        case "ArrowRight":
-        #            self.play.moveRight()
-        #            break
-        #        case "ArrowDown":
-        #            self.play.moveDown()
-        #            break
-        #        case "ArrowUp":
-        #            self.play.rotate()
-        #            break
-        #        case "Space":
-        #            self.play.drop()
-        #            break
-
-        # Add event listener
-        window.addEventListener('keydown', self.onKeyDown)
+        self.playTimer.start(self.ST_DOWN_INTERVAL, self)
 
     # Stop
     def stop(self):
-        # Clear interval
-        clearInterval(self.playIntervalHandle)
-        # Remove event listener
-        window.removeEventListener('keydown', self.onKeyDown)
+        self.playTimer.stop()
+
+    def timerEvent(self, e):
+        self.play.moveDown()
+
+    def keyPressEvent(self, e):
+        key = e.key()
+
+        if key == Qt.Key_Left:
+            self.play.moveLeft()
+        elif key == Qt.Key_Right:
+            self.play.moveRight()
+        elif key == Qt.Key_Down:
+            self.play.moveDown()
+        elif key == Qt.Key_Up:
+            self.play.rotate()
+        elif key == Qt.Key_Space:
+            self.play.drop()
 
     # Notify
-    def notify(self, message, param):
+    def notify(self, message, param=None):
         if (message == StPlay.ST_NOTIFY_DOWN):
             self.score.setScore(self.score.getScore() + 100)
         elif (message == StPlay.ST_NOTIFY_DROP):
@@ -100,104 +90,109 @@ class StTetris(QWidget):
             self.stop()
 
         # Update high score
-        if self.highScore.getScore() < self.score.getScore():
-            self.highScore.setScore(self.score.getScore())
-            sessionStorage.setItem("highscore", self.highScore.getScore())
+        #if self.highScore.getScore() < self.score.getScore():
+        #    self.highScore.setScore(self.score.getScore())
+        #    sessionStorage.setItem("highscore", self.highScore.getScore())
 
-        self.drawTetris(self.ctx)
+        self.update()
+
+    def paintEvent(self, e):
+        self.painter.begin(self)
+        self.drawTetris(self.painter)
+        self.painter.end()
 
     # Draw tetris
-    def drawTetris(self, ctx):
+    def drawTetris(self, painter):
 
         # Draw background
         rect = {
-            x: 0,
-            y: 0,
-            width: StTetris.ST_WINDOW_WIDTH,
-            height: StTetris.ST_WINDOW_HEIGHT
+            "x" : 0,
+            "y" : 0,
+            "width" : self.ST_WINDOW_WIDTH,
+            "height" : self.ST_WINDOW_HEIGHT
         }
-        self.drawBackground(self.ctx, rect)
+        self.drawBackground(painter, rect)
 
         # Draw board
         boardRect = {
-            x: StTetris.ST_BOARD_POS_X,
-            y: StTetris.ST_BOARD_POS_Y,
-            width: StTetris.ST_BLOCK_WIDTH * self.play.getBoard().getXSize(),
-            height: StTetris.ST_BLOCK_HEIGHT * self.play.getBoard().getYSize()
+            "x" : self.ST_BOARD_POS_X,
+            "y" : self.ST_BOARD_POS_Y,
+            "width" : self.ST_BLOCK_WIDTH * self.play.getBoard().getXSize(),
+            "height" : self.ST_BLOCK_HEIGHT * self.play.getBoard().getYSize()
         }
-        self.drawBoard(ctx, boardRect, self.play.getBoard())
+        self.drawBoard(painter, boardRect, self.play.getBoard())
 
         # Draw current block
-        self.drawBlock(ctx, boardRect, self.play.getCurrentBlock())
+        self.drawBlock(painter, boardRect, self.play.getCurrentBlock())
 
         # Draw next block
         nextBlockRect = {
-            x: StTetris.ST_NEXT_BLOCK_POS_X,
-            y: StTetris.ST_NEXT_BLOCK_POS_Y,
-            width: StTetris.ST_BLOCK_WIDTH * StTetris.ST_MAX_BLOCK_X,
-            height: StTetris.ST_BLOCK_HEIGHT * StTetris.ST_MAX_BLOCK_Y
+            "x" : self.ST_NEXT_BLOCK_POS_X,
+            "y" : self.ST_NEXT_BLOCK_POS_Y,
+            "width" : self.ST_BLOCK_WIDTH * 4,
+            "height" : self.ST_BLOCK_HEIGHT * 4,
         }
-        self.drawBlock(ctx, nextBlockRect, self.play.getNextBlock())
+        self.drawBlock(painter, nextBlockRect, self.play.getNextBlock())
 
         # Draw score
         scoreRect = {
-            x: StTetris.ST_SCORE_POS_X,
-            y: StTetris.ST_SCORE_POS_Y,
-            width: StTetris.ST_BLOCK_WIDTH * 7,
-            height: StTetris.ST_BLOCK_HEIGHT * 2
+            "x" : self.ST_SCORE_POS_X,
+            "y" : self.ST_SCORE_POS_Y,
+            "width" : self.ST_BLOCK_WIDTH * 7,
+            "height" : self.ST_BLOCK_HEIGHT * 2
         }
-        self.drawScore(ctx, scoreRect, "SCORE", self.score)
+        self.drawScore(painter, scoreRect, "SCORE", self.score)
 
         # Draw high score
         highScoreRect = {
-            x: StTetris.ST_HIGHSCORE_POS_X,
-            y: StTetris.ST_HIGHSCORE_POS_Y,
-            width: StTetris.ST_BLOCK_WIDTH * 7,
-            height: StTetris.ST_BLOCK_HEIGHT * 2
+            "x" : self.ST_HIGHSCORE_POS_X,
+            "y" : self.ST_HIGHSCORE_POS_Y,
+            "width" : self.ST_BLOCK_WIDTH * 7,
+            "height" : self.ST_BLOCK_HEIGHT * 2
         }
-        self.drawScore(ctx, highScoreRect, "HIGH SCORE", self.highScore)
+        self.drawScore(painter, highScoreRect, "HIGH SCORE", self.highScore)
 
     # Draw background
-    def drawBackground(self, ctx, rect):
-        ctx.fillStyle = StTetris.ST_BACKGROUND_COLOR
-        ctx.fillRect(rect.x, rect.y, rect.width, rect.height)
+    def drawBackground(self, painter, rect):
+        painter.fillRect(QRect(rect["x"], rect["y"], rect["width"], rect["height"]), QColor(self.ST_BACKGROUND_COLOR))
 
     # Draw board
-    def drawBoard(self, ctx, rect, board):
+    def drawBoard(self, painter, rect, board):
 
         # Draw board
         for boardY in range(board.getYSize()):
             for boardX in range(board.getXSize()):
                 rectBlock = {
-                    x: rect.x + boardX * StTetris.ST_BLOCK_WIDTH,
-                    y: rect.y + boardY * StTetris.ST_BLOCK_HEIGHT,
-                    width: StTetris.ST_BLOCK_WIDTH,
-                    height: StTetris.ST_BLOCK_HEIGHT
+                    "x" : rect["x"] + boardX * StTetris.ST_BLOCK_WIDTH,
+                    "y" : rect["y"] + boardY * StTetris.ST_BLOCK_HEIGHT,
+                    "width" : StTetris.ST_BLOCK_WIDTH,
+                    "height" : StTetris.ST_BLOCK_HEIGHT
                 }
-                ctx.fillStyle = StTetris.ST_BLOCK_COLOR[self.play.getBoard().getBlock(boardX, boardY)]
-                ctx.fillRect(rectBlock.x, rectBlock.y, rectBlock.width, rectBlock.height)
+                fillColor = StTetris.ST_BLOCK_COLOR[self.play.getBoard().getBlock(boardX, boardY)]
+                painter.fillRect(QRect(rectBlock["x"], rectBlock["y"], rectBlock["width"], rectBlock["height"]), QColor(fillColor))
 
     # Draw block
-    def drawBlock(self, ctx, rect, block):
+    def drawBlock(self, painter, rect, block):
 
         # Draw block
         for blockY in range(block.getYSize()):
             for blockX in range(block.getXSize()):
                 if block.getBlock(blockX, blockY):
                     rectBlock = {
-                        x: rect.x + (block.getXPos() + blockX) * StTetris.ST_BLOCK_WIDTH,
-                        y: rect.y + (block.getYPos() + blockY) * StTetris.ST_BLOCK_HEIGHT,
-                        width: StTetris.ST_BLOCK_WIDTH, height: StTetris.ST_BLOCK_HEIGHT
+                        "x" : rect["x"] + (block.getXPos() + blockX) * StTetris.ST_BLOCK_WIDTH,
+                        "y" : rect["y"] + (block.getYPos() + blockY) * StTetris.ST_BLOCK_HEIGHT,
+                        "width" : StTetris.ST_BLOCK_WIDTH,
+                        "height" : StTetris.ST_BLOCK_HEIGHT
                     }
-                    ctx.fillStyle = StTetris.ST_BLOCK_COLOR[block.getBlock(blockX, blockY)]
-                    ctx.fillRect(rectBlock.x, rectBlock.y, rectBlock.width, rectBlock.height)
+                    fillColor = StTetris.ST_BLOCK_COLOR[block.getBlock(blockX, blockY)]
+                    painter.fillRect(QRect(rectBlock["x"], rectBlock["y"], rectBlock["width"], rectBlock["height"]), QColor(fillColor))
 
     # Draw score
-    def drawScore(self, ctx, rect, title, score):
+    def drawScore(self, painter, rect, title, score):
         # Draw title
-        ctx.textAligh = "right"
-        ctx.fillStyle = "red"
-        ctx.fillText(title, rect.x, rect.y)
+        painter.textAligh = "right"
+        painter.fillStyle = "red"
+        painter.drawText(rect["x"], rect["y"], title)
 
         # Draw score
-        ctx.fillText(score.getScore(), rect.x, rect.y + rect.height // 2)
+        painter.drawText(rect["x"], rect["y"] + rect["height"] // 2, str(score.getScore()))

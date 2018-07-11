@@ -5,7 +5,7 @@ class StBoard:
     # Constructor
     def __init__(self):
         # Board
-        self.board = numpy.zeros(shape=(self.getYSize(), self.getXSize()))
+        self.board = numpy.zeros(shape=(self.getYSize(), self.getXSize()), dtype=int)
 
     # Get X size
     def getXSize(self):
@@ -48,11 +48,11 @@ class StBoard:
                     block_count += 1
 
             # The line of board is full of block
-            if block_count == self.board[boardY].length:
+            if block_count is len(self.board[boardY]):
                 # Delete line of board
                 self.board.pop(boardY)
                 # Add line to the beginning of the board
-                self.board = numpy.zeros(shape=(1, self.getXSize())) + self.board
+                self.board = numpy.zeros(shape=(1, self.getXSize()), dtype=int) + self.board
                 complete_lines += 1
 
         return complete_lines
